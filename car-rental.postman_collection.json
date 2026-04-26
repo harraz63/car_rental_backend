@@ -1,0 +1,957 @@
+{
+  "info": {
+    "name": "Car Rental System API",
+    "description": "Complete API collection for the Car Rental System with Admin Approval Workflow.\n\n📌 HOW TO USE:\n1. Run 'Login as Admin' → adminToken auto-saved\n2. Run 'Signup Owner (with Car)' → ownerToken + carId auto-saved\n3. Run 'Signup User' then 'Login as User' → userToken auto-saved\n4. All subsequent requests use saved tokens & IDs automatically\n\n✅ NEW: DELETE /cars/:id — Admin or Owner",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api/v1"
+    },
+    {
+      "key": "userToken",
+      "value": ""
+    },
+    {
+      "key": "ownerToken",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "carId",
+      "value": ""
+    },
+    {
+      "key": "rentalId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Auth",
+      "item": [
+        {
+          "name": "Signup User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Returns user + token', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data).to.have.property('user');",
+                  "  pm.expect(res.data).to.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup-user",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"Ahmed Mohamed\",\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Signup Owner (with Car) ★",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.status === 'success' && res.data) {",
+                  "  if (res.data.token) {",
+                  "    pm.collectionVariables.set('ownerToken', res.data.token);",
+                  "    console.log('✅ ownerToken saved');",
+                  "  }",
+                  "  if (res.data.car && res.data.car._id) {",
+                  "    pm.collectionVariables.set('carId', res.data.car._id);",
+                  "    console.log('✅ carId saved:', res.data.car._id);",
+                  "  }",
+                  "}",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Returns user + car + token', () => {",
+                  "  pm.expect(res.data).to.have.property('user');",
+                  "  pm.expect(res.data).to.have.property('car');",
+                  "  pm.expect(res.data).to.have.property('token');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup-owner",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"Mohamed Owner\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"password123\",\n  \"car\": {\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"year\": 2022,\n    \"color\": \"White\",\n    \"dailyPrice\": 250,\n    \"location\": \"Cairo\",\n    \"description\": \"Clean and comfortable car\",\n    \"numberOfSeats\": 5,\n    \"engine\": \"2.5L\",\n    \"transmission\": \"automatic\",\n    \"fuelType\": \"petrol\",\n    \"images\": [\n      \"https://image1.com/car.jpg\",\n      \"https://image2.com/car.jpg\"\n    ]\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Signup Owner — Missing car (expect 422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rejects missing car with 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Returns validation error mentioning car', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.status).to.eql('error');",
+                  "  pm.expect(res.message).to.include('car');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup-owner",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"No Car Owner\",\n  \"email\": \"nocar@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Signup Owner — Invalid car data (expect 422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rejects invalid car data with 422', () => pm.response.to.have.status(422));",
+                  "pm.test('Returns error status', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.status).to.eql('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/signup-owner",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"name\": \"Bad Car Owner\",\n  \"email\": \"badcar@example.com\",\n  \"password\": \"password123\",\n  \"car\": {\n    \"brand\": \"Toyota\",\n    \"model\": \"Camry\",\n    \"year\": 1980,\n    \"dailyPrice\": -50,\n    \"transmission\": \"automatic\",\n    \"fuelType\": \"petrol\",\n    \"images\": []\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Login as User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('userToken', res.data.token);",
+                  "  console.log('✅ userToken saved');",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login as Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('ownerToken', res.data.token);",
+                  "  console.log('✅ ownerToken saved');",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"owner@example.com\",\n  \"password\": \"password123\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login as Admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.token) {",
+                  "  pm.collectionVariables.set('adminToken', res.data.token);",
+                  "  console.log('✅ adminToken saved');",
+                  "}",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"admin@carrental.com\",\n  \"password\": \"Admin@12345\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login — Wrong password (expect 401)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rejects bad credentials with 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"email\": \"ahmed@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🚗 Cars",
+      "item": [
+        {
+          "name": "[OWNER] Create Car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.car && res.data.car._id) {",
+                  "  pm.collectionVariables.set('carId', res.data.car._id);",
+                  "  console.log('✅ carId saved:', res.data.car._id);",
+                  "}",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Car status is pending', () => {",
+                  "  pm.expect(res.data.car.status).to.eql('pending');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Camry\",\n  \"year\": 2022,\n  \"color\": \"White\",\n  \"dailyPrice\": 150,\n  \"location\": \"Cairo\",\n  \"description\": \"Well maintained family sedan\",\n  \"numberOfSeats\": 5,\n  \"engine\": \"2.5L\",\n  \"transmission\": \"automatic\",\n  \"fuelType\": \"petrol\",\n  \"images\": [\n    \"https://example.com/car1.jpg\",\n    \"https://example.com/car2.jpg\"\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "[OWNER] Create Car — No images (expect 422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rejects empty images with 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"brand\": \"Toyota\",\n  \"model\": \"Camry\",\n  \"year\": 2022,\n  \"dailyPrice\": 150,\n  \"transmission\": \"automatic\",\n  \"fuelType\": \"petrol\",\n  \"images\": []\n}"
+            }
+          }
+        },
+        {
+          "name": "[OWNER] Get My Cars",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.cars).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/my"
+          }
+        },
+        {
+          "name": "[USER] Get Approved Cars",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All cars are approved', () => {",
+                  "  const res = pm.response.json();",
+                  "  res.data.cars.forEach(car => {",
+                  "    pm.expect(car.status).to.eql('approved');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars"
+          }
+        },
+        {
+          "name": "[ADMIN] Get Pending Cars",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('All cars are pending', () => {",
+                  "  const res = pm.response.json();",
+                  "  res.data.cars.forEach(car => {",
+                  "    pm.expect(car.status).to.eql('pending');",
+                  "  });",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/pending"
+          }
+        },
+        {
+          "name": "[ADMIN] Approve Car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Car status is approved', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.car.status).to.eql('approved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}/approve"
+          }
+        },
+        {
+          "name": "[ADMIN] Reject Car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Car status is rejected', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.car.status).to.eql('rejected');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}/reject",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reason\": \"Images are unclear. Please resubmit with better photos.\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Edit Car",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Car updated', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.status).to.eql('success');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"dailyPrice\": 180,\n  \"location\": \"Alexandria\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Car ★ NEW",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Car deleted successfully', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.status).to.eql('success');",
+                  "  pm.expect(res.message).to.include('deleted');",
+                  "});",
+                  "// Clear carId after deletion",
+                  "pm.collectionVariables.set('carId', '');",
+                  "console.log('🗑️ Car deleted, carId cleared');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}"
+          }
+        },
+        {
+          "name": "[OWNER] Delete Own Car ★ NEW",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Car deleted successfully', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.status).to.eql('success');",
+                  "  pm.expect(res.message).to.include('deleted');",
+                  "});",
+                  "pm.collectionVariables.set('carId', '');",
+                  "console.log('🗑️ Owner deleted their car, carId cleared');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ownerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}"
+          }
+        },
+        {
+          "name": "[USER] Delete Car — Forbidden (expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User cannot delete cars (403)', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/{{carId}}"
+          }
+        },
+        {
+          "name": "[ADMIN] Delete Car — Not Found (expect 404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Returns 404 for non-existent car', () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/000000000000000000000000"
+          }
+        },
+        {
+          "name": "[USER] Access Pending Cars — Forbidden (expect 403)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Non-admin blocked with 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/cars/pending"
+          }
+        }
+      ]
+    },
+    {
+      "name": "📄 Rentals",
+      "item": [
+        {
+          "name": "[USER] Request Rental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.data && res.data.rental && res.data.rental._id) {",
+                  "  pm.collectionVariables.set('rentalId', res.data.rental._id);",
+                  "  console.log('✅ rentalId saved:', res.data.rental._id);",
+                  "}",
+                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                  "pm.test('Rental status is pending', () => {",
+                  "  pm.expect(res.data.rental.status).to.eql('pending');",
+                  "});",
+                  "pm.test('totalPrice is calculated server-side', () => {",
+                  "  pm.expect(res.data.rental.totalPrice).to.be.a('number').and.above(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/rentals",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"carId\": \"{{carId}}\",\n  \"startDate\": \"2026-09-01\",\n  \"endDate\": \"2026-09-07\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[USER] Request Rental — Past date (expect 422)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Rejects past startDate with 422', () => pm.response.to.have.status(422));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/rentals",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"carId\": \"{{carId}}\",\n  \"startDate\": \"2020-01-01\",\n  \"endDate\": \"2020-01-07\"\n}"
+            }
+          }
+        },
+        {
+          "name": "[USER] Get My Rentals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.rentals).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/rentals/my"
+          }
+        },
+        {
+          "name": "[ADMIN] Get Pending Rentals",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Returns array', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.rentals).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/rentals/pending"
+          }
+        },
+        {
+          "name": "[ADMIN] Approve Rental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Rental status is approved', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.rental.status).to.eql('approved');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/rentals/{{rentalId}}/approve"
+          }
+        },
+        {
+          "name": "[ADMIN] Reject Rental",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Rental status is rejected', () => {",
+                  "  const res = pm.response.json();",
+                  "  pm.expect(res.data.rental.status).to.eql('rejected');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/rentals/{{rentalId}}/reject",
+            "body": {
+              "mode": "raw",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              },
+              "raw": "{\n  \"reason\": \"Car is unavailable for those dates.\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
