@@ -6,6 +6,7 @@ import authRoutes from './modules/auth/routes/auth.routes';
 import carRoutes from './modules/cars/routes/car.routes';
 import rentalRoutes from './modules/rentals/routes/rental.routes';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
+import connectDB from './config/db';
 
 const app: Application = express();
 
@@ -17,6 +18,15 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+});
 
 app.get('/', (_req, res) => {
   res.status(200).json({
