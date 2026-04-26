@@ -6,16 +6,16 @@ A scalable RESTful API built with **Express + TypeScript + MongoDB** featuring a
 
 ## 📦 Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Runtime | Node.js |
-| Framework | Express.js |
-| Language | TypeScript |
-| Database | MongoDB + Mongoose |
-| Auth | JWT (jsonwebtoken) |
-| Validation | Joi |
-| Password | bcryptjs |
-| Logging | Morgan |
+| Layer      | Technology         |
+| ---------- | ------------------ |
+| Runtime    | Node.js            |
+| Framework  | Express.js         |
+| Language   | TypeScript         |
+| Database   | MongoDB + Mongoose |
+| Auth       | JWT (jsonwebtoken) |
+| Validation | Joi                |
+| Password   | bcryptjs           |
+| Logging    | Morgan             |
 
 ---
 
@@ -81,7 +81,7 @@ Edit `.env`:
 
 ```env
 PORT=3000
-MONGODB_URI=mongodb://localhost:27017/car-rental
+MONGO_URI=mongodb://localhost:27017/car-rental
 JWT_SECRET=your_super_secret_jwt_key_change_this
 JWT_EXPIRES_IN=7d
 NODE_ENV=development
@@ -94,6 +94,7 @@ npm run seed
 ```
 
 This creates:
+
 - **Email:** `admin@carrental.com`
 - **Password:** `Admin@12345`
 
@@ -122,10 +123,10 @@ Authorization: Bearer <your_jwt_token>
 
 ### Roles
 
-| Role | Description |
-|------|-------------|
-| `user` | Can browse approved cars and request rentals |
-| `owner` | Can add cars and view their own listings |
+| Role    | Description                                    |
+| ------- | ---------------------------------------------- |
+| `user`  | Can browse approved cars and request rentals   |
+| `owner` | Can add cars and view their own listings       |
 | `admin` | Can approve/reject cars and rentals, edit cars |
 
 ---
@@ -136,13 +137,14 @@ Base URL: `http://localhost:3000/api/v1`
 
 ### Auth Endpoints
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/auth/signup-user` | ❌ | Register as a user |
-| POST | `/auth/signup-owner` | ❌ | Register as a car owner |
-| POST | `/auth/login` | ❌ | Login and receive JWT |
+| Method | Endpoint             | Auth | Description             |
+| ------ | -------------------- | ---- | ----------------------- |
+| POST   | `/auth/signup-user`  | ❌   | Register as a user      |
+| POST   | `/auth/signup-owner` | ❌   | Register as a car owner |
+| POST   | `/auth/login`        | ❌   | Login and receive JWT   |
 
 #### POST `/auth/signup-user`
+
 ```json
 {
   "name": "Ahmed Mohamed",
@@ -152,6 +154,7 @@ Base URL: `http://localhost:3000/api/v1`
 ```
 
 #### POST `/auth/login`
+
 ```json
 {
   "email": "ahmed@example.com",
@@ -160,6 +163,7 @@ Base URL: `http://localhost:3000/api/v1`
 ```
 
 **Response:**
+
 ```json
 {
   "status": "success",
@@ -174,17 +178,18 @@ Base URL: `http://localhost:3000/api/v1`
 
 ### Car Endpoints
 
-| Method | Endpoint | Role | Description |
-|--------|----------|------|-------------|
-| GET | `/cars` | USER | Browse all approved cars |
-| POST | `/cars` | OWNER | Submit a new car (status → pending) |
-| GET | `/cars/my` | OWNER | View own car listings |
-| GET | `/cars/pending` | ADMIN | View all pending cars |
-| PATCH | `/cars/:id/approve` | ADMIN | Approve a car |
-| PATCH | `/cars/:id/reject` | ADMIN | Reject a car |
-| PATCH | `/cars/:id` | ADMIN | Edit any car field |
+| Method | Endpoint            | Role  | Description                         |
+| ------ | ------------------- | ----- | ----------------------------------- |
+| GET    | `/cars`             | USER  | Browse all approved cars            |
+| POST   | `/cars`             | OWNER | Submit a new car (status → pending) |
+| GET    | `/cars/my`          | OWNER | View own car listings               |
+| GET    | `/cars/pending`     | ADMIN | View all pending cars               |
+| PATCH  | `/cars/:id/approve` | ADMIN | Approve a car                       |
+| PATCH  | `/cars/:id/reject`  | ADMIN | Reject a car                        |
+| PATCH  | `/cars/:id`         | ADMIN | Edit any car field                  |
 
 #### POST `/cars` — Create Car (OWNER)
+
 ```json
 {
   "brand": "Toyota",
@@ -198,14 +203,12 @@ Base URL: `http://localhost:3000/api/v1`
   "engine": "2.5L",
   "transmission": "automatic",
   "fuelType": "petrol",
-  "images": [
-    "https://example.com/car1.jpg",
-    "https://example.com/car2.jpg"
-  ]
+  "images": ["https://example.com/car1.jpg", "https://example.com/car2.jpg"]
 }
 ```
 
 #### PATCH `/cars/:id/reject` — Reject Car (ADMIN)
+
 ```json
 {
   "reason": "Images are unclear, please resubmit."
@@ -216,15 +219,16 @@ Base URL: `http://localhost:3000/api/v1`
 
 ### Rental Endpoints
 
-| Method | Endpoint | Role | Description |
-|--------|----------|------|-------------|
-| POST | `/rentals` | USER | Request a rental |
-| GET | `/rentals/my` | USER | View own rental history |
-| GET | `/rentals/pending` | ADMIN | View all pending rentals |
-| PATCH | `/rentals/:id/approve` | ADMIN | Approve a rental |
-| PATCH | `/rentals/:id/reject` | ADMIN | Reject a rental |
+| Method | Endpoint               | Role  | Description              |
+| ------ | ---------------------- | ----- | ------------------------ |
+| POST   | `/rentals`             | USER  | Request a rental         |
+| GET    | `/rentals/my`          | USER  | View own rental history  |
+| GET    | `/rentals/pending`     | ADMIN | View all pending rentals |
+| PATCH  | `/rentals/:id/approve` | ADMIN | Approve a rental         |
+| PATCH  | `/rentals/:id/reject`  | ADMIN | Reject a rental          |
 
 #### POST `/rentals` — Request Rental (USER)
+
 ```json
 {
   "carId": "64f1a2b3c4d5e6f7a8b9c0d1",
@@ -234,6 +238,7 @@ Base URL: `http://localhost:3000/api/v1`
 ```
 
 **Response includes auto-calculated `totalPrice`:**
+
 ```json
 {
   "status": "success",
@@ -265,15 +270,15 @@ Base URL: `http://localhost:3000/api/v1`
 
 ## 🛡️ Validation Rules
 
-| Field | Rule |
-|-------|------|
-| `year` | Integer, min 1990, max current year + 1 |
-| `dailyPrice` | Positive number, > 0 |
-| `images` | Array of valid URLs, at least 1 required |
-| `transmission` | `"automatic"` or `"manual"` |
-| `fuelType` | `"petrol"`, `"diesel"`, or `"hybrid"` |
-| `startDate` | Must be in the future |
-| `endDate` | Must be after `startDate` |
+| Field          | Rule                                     |
+| -------------- | ---------------------------------------- |
+| `year`         | Integer, min 1990, max current year + 1  |
+| `dailyPrice`   | Positive number, > 0                     |
+| `images`       | Array of valid URLs, at least 1 required |
+| `transmission` | `"automatic"` or `"manual"`              |
+| `fuelType`     | `"petrol"`, `"diesel"`, or `"hybrid"`    |
+| `startDate`    | Must be in the future                    |
+| `endDate`      | Must be after `startDate`                |
 
 ---
 
@@ -288,15 +293,15 @@ All errors follow this format:
 }
 ```
 
-| Code | Meaning |
-|------|---------|
-| 400 | Bad request / validation failed |
-| 401 | Unauthenticated |
-| 403 | Forbidden (wrong role) |
-| 404 | Resource not found |
-| 409 | Conflict (duplicate email, booking overlap) |
-| 422 | Unprocessable entity (Joi validation) |
-| 500 | Internal server error |
+| Code | Meaning                                     |
+| ---- | ------------------------------------------- |
+| 400  | Bad request / validation failed             |
+| 401  | Unauthenticated                             |
+| 403  | Forbidden (wrong role)                      |
+| 404  | Resource not found                          |
+| 409  | Conflict (duplicate email, booking overlap) |
+| 422  | Unprocessable entity (Joi validation)       |
+| 500  | Internal server error                       |
 
 ---
 
