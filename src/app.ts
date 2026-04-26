@@ -18,9 +18,18 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Car Rental API is running 🚗',
+  });
+});
+
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Car Rental API is running 🚗' });
+  res
+    .status(200)
+    .json({ status: 'ok', message: 'Car Rental API is running 🚗' });
 });
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
