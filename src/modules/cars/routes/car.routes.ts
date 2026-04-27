@@ -12,7 +12,7 @@ const router = Router();
 router.get('/', authenticate, authorize(UserRole.USER, UserRole.ADMIN, UserRole.OWNER), carController.getApprovedCars);
 
 // OWNER routes
-router.post('/', authenticate, authorize(UserRole.OWNER), validate(createCarSchema), carController.createCar);
+router.post('/', authenticate, authorize(UserRole.OWNER, UserRole.ADMIN), validate(createCarSchema), carController.createCar);
 router.get('/my', authenticate, authorize(UserRole.OWNER), carController.getMyCars);
 
 // ADMIN routes
